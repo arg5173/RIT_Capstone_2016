@@ -143,8 +143,8 @@ if [ $ROLE == "DA" ]; then
 	echo "[!] Setting Role to DA"
 	
 
-	echo "AssumeReachable 1" >> /etc/tor/torrc
-	echo "AuthoritativeDirectory 1" >> /etc/tor/torrc
+	echo "AssumeReachable 1" >> /etc/tor/torrc			#Adding AssumeReachable1 to torrc
+	echo "AuthoritativeDirectory 1" >> /etc/tor/torrc		#Adding AuthoritativeDirectory1 and V3 to torrc
 	echo "V3AuthoritativeDirectory 1" >> /etc/tor/torrc
 	# Append DA template config file to the end of current torrc
 	#echo "[!] appending DA config to torrc"
