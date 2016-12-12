@@ -12,7 +12,7 @@ while read p; do
 	fi
 done <./DAs
 
-if [ $FLAG ]; then
+if [ "$FLAG" -eq 1 ]; then
 	service tor restart
 fi
 
