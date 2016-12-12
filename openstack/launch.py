@@ -58,9 +58,9 @@ def get_auth(username, password):
        Returns:
            auth - dictionary for authenticating to openstack keyauth
     """
-    global project_id, auth_url, auth_vers, ssl_setting
+    global project_id, auth_url, auth_vers, ssl_setting, user_append
 
-    username = username + "@ad.rit.edu"
+    username = username + user_append
     auth = {}
     auth['version'] = auth_vers
     auth['insecure'] = True
@@ -102,6 +102,7 @@ def create_novaclient(username,password):
         Returns:
            nova_client - object to query openstack
     """
+    load_config_file()
     if username is None:
         username = input("Enter username: ")
         password = getpass.getpass("Enter password: ")
@@ -155,7 +156,7 @@ def list_instances(nova_client):
     """
     print("\nList Instances: ")
     for line in nova_client.servers.list():
-        print(line)
+        print(line.name)
 
 def list_images(nova_client):
     """
@@ -377,7 +378,7 @@ def create_relaynode(nova_client, relay_config, override_size):
 
     return relay_list
 
-def create_clientnode(nova_client, client_config, overide_size):
+def create_clientnode(nova_client, client_config, override_size):
     client_config['name'] = "client_node"
     client_config['script'] = load_launch_script("CLIENT", client_config['util_ip'])
     if override_size is not None:
@@ -429,13 +430,15 @@ def create_node(nova_client, config):
         netname = nova_client.networks.find(label=default_network)
     nics = [{'net-id': netname.id}]
 
+    print(config['script'])
+
     for i in range(0,size):
         name = node_name + str(i)
         instance = nova_client.servers.create(name=name,
                                               image=image,
                                               flavor=flavor,
                                               nics=nics,
-                                              userdata=config['script'])
+                                              userdata="mkdir /home/ubuntu/testdir")
         node_list.append(instance)
         time.sleep(5)
         logger(None, "Network: " + name + " node created", None, None)
@@ -488,7 +491,7 @@ def load_config_file():
         Returns:
             None
     """
-    global project_id, auth_url, auth_vers, ssl_setting, default_image, default_flavor, default_network, launch_script
+    global project_id, auth_url, auth_vers, ssl_setting, default_image, default_flavor, default_network, launch_script, user_append
     try:
         with open('torlaunch.conf','r') as config:
             for line in config:
@@ -503,6 +506,18 @@ def load_config_file():
                         for i in range(2, len(spline)):
                             project_id = project_id + " " + spline[i]
                     project_id = project_id.strip()
+
+                elif "append_username" in line:
+                    spline = line.split(' ')
+                    try:
+                        user_append = spline[1]
+                    except:
+                        err_msg = "Config error: No value specified for append_username"
+                        logger(None, None, err_msg, err_msg)
+                    if len(spline) > 2:
+                        for i in range(2, len(spline)):
+                            user_append = user_append + " " + spline[i]
+                    user_append = user_append.strip()
 
                 elif "authentication_url" in line:
                     spline = line.split(' ')
@@ -601,7 +616,7 @@ def load_config_file():
 
 # Teardown functions
 
-def destroy_network(nova_client, node_list):
+def destroy_network(nova_client, nodes):
     """
         Deletes nodes by id.
 
@@ -612,8 +627,8 @@ def destroy_network(nova_client, node_list):
         Returns:
             None
 	"""
-    for key in node_list:
-        for e in node_list[key]:
+    for key in nodes:
+        for e in nodes[key]:
             nova_client.servers.delete(e.id)
 
 # Launch functions
@@ -659,7 +674,7 @@ def web_launch(nova_client, img, flav, netname, util_ip, size, da_size):
 
     return nodes
 
-def web_dismantle(nova_client, node_list):
+def web_dismantle(nova_client, nodes):
     """
         Called directly from the web interface. Destroys nodes in provided list
 
@@ -670,15 +685,24 @@ def web_dismantle(nova_client, node_list):
         Returns:
             None
     """
-    destroy_network(nova_client, node_list)
+    destroy_network(nova_client, nodes)
 
 # Test functions
 
-def test_launch(username, password, img, flav, netname, util_ip, size, da_size):
+def nc_launch(username, password, img, flav, netname, size, da_size):
     """
         tests network launch
     """
+    load_config_file()
     nova_client = create_novaclient(username,password)
+
+    util_config = {'image': None,
+                   'flavor': None,
+                   'netname': None}
+
+    util_list = create_utilserv(nova_client, util_config, None)
+    util_ip = util_list[0].ipv4_addr # modify this to retrieve ip address
+    time.sleep(60) # wait for utility server to fully initialize
 
     config = {'image': img,
 	          'flavor': flav,
@@ -690,7 +714,6 @@ def test_launch(username, password, img, flav, netname, util_ip, size, da_size):
     global num_nodes
     num_nodes = config['size']
 
-    util_list = create_utilserv(nova_client, config)
     da_list = create_dirauth(nova_client, config)
     exit_list = create_exitnode(nova_client, config)
     relay_list = create_relaynode(nova_client, config)
