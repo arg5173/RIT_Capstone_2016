@@ -49,7 +49,7 @@ echo "[!] Updating package manager"
 apt-get update > /dev/null		#Update the package manager to ensure up-to-date installiations
 	
 echo "[!] Installing tor"		
-apt-get install -y tor > /dev/null	#Install Tor... I wonder why lol
+apt-get install -y tor	#Install Tor... I wonder why lol
 
 echo "[!] Installing pwgen to generate hostnames"	
 apt-get install -y pwgen > /dev/null	# We use a program called pwgen to randomly create names for the relays, this program will spit out a random string of chrs
