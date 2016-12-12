@@ -20,23 +20,13 @@
 
 
 
-#if [ ($1 == "-h") || ($# -ne 2) ]; then
-#	echo "Tor Private Network Deploy Script"
-#	echo "Useage: ./deploy.sh [DA | RELAY | EXIT | CLIENT | HS] [UTIL IP]"
-#	echo "---------------------------------------------------------------"
-#	echo "Example: ./deploy.sh DA 172.19.43.32 (For a DA)"
-#	echo "Example: ./deploy.sh RELAY 172.19.43.32 (For a Relay)"
-#	echo "\n"
-#fi
-
-
-
 # Incase you are running this on a machine that has already been deployed it will remove any files that could cause problems
 # from previous deployments
 
 # Delete existing tor on box
 echo > /etc/tor/torrc		# echo > onto any file will empty it out effectivly clearing torrc
 rm -r /var/lib/tor/keys		# Remove the keys directory incase it was a DA	
+service tor stop
 
 # Define Variables
 ROLE=$1				# Role will either be DA, RELAY, CLIENT, EXIT, or HS passed in from the command line
