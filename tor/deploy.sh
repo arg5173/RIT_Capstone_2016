@@ -26,7 +26,7 @@
 # Delete existing tor on box
 echo > /etc/tor/torrc		# echo > onto any file will empty it out effectivly clearing torrc
 rm -r /var/lib/tor/keys		# Remove the keys directory incase it was a DA	
-service tor stop
+
 
 # Define Variables
 ROLE=$1				# Role will either be DA, RELAY, CLIENT, EXIT, or HS passed in from the command line
@@ -50,6 +50,7 @@ apt-get update > /dev/null		#Update the package manager to ensure up-to-date ins
 	
 echo "[!] Installing tor"		
 apt-get install -y tor	#Install Tor... I wonder why lol
+service tor stop
 
 echo "[!] Installing pwgen to generate hostnames"	
 apt-get install -y pwgen > /dev/null	# We use a program called pwgen to randomly create names for the relays, this program will spit out a random string of chrs
