@@ -1,5 +1,8 @@
 UTIL_SERVER=$1
-sshpass -p "wordpass" scp -oStrictHostKeyChecking=no tor@${UTIL_SERVER}:~/DAs .
+
+# sshpass -p "wordpass" scp -oStrictHostKeyChecking=no tor@${UTIL_SERVER}:~/DAs
+
+scp -i "tor-key" admin@${UTIL_SERVER}:/home/tor/DAs .
 
 FLAG=0
 while read p; do
@@ -15,4 +18,3 @@ done <./DAs
 if [ "$FLAG" -eq 1 ]; then
 	service tor restart
 fi
-
